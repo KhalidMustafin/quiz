@@ -1,7 +1,19 @@
 import { Router } from 'express';
 
+import { roomsService } from '../rooms/service';
+
 export const sessionsRouter = Router();
 
 sessionsRouter.get('/', (_req, res) => {
-  res.json({ items: [], message: 'Sessions stub endpoint' });
+  res.json({ items: roomsService.listSessions() });
+});
+
+sessionsRouter.get('/:sessionId', (req, res) => {
+  const session = roomsService.getSession(req.params.sessionId);
+
+  if (!session) {
+    return res.status(404).json({ error: 'SESSION_NOT_FOUND' });
+  }
+
+  return res.json({ session });
 });
