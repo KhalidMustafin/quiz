@@ -65,6 +65,14 @@ roomsRouter.post('/:roomId/join', (req, res) => {
       return sendError(res, 404, room.error);
     }
 
+    if (room.error === 'INVALID_DISPLAY_NAME') {
+      return sendError(res, 400, room.error, { message: 'Display name must not be empty' });
+    }
+
+    if (room.error === 'DISPLAY_NAME_TOO_LONG') {
+      return sendError(res, 400, room.error, { message: 'Display name max length is 30 chars' });
+    }
+
     return sendError(res, 409, room.error, { message: 'Display name already taken in room' });
   }
 
@@ -87,6 +95,14 @@ roomsRouter.post('/join-by-code', (req, res) => {
   if ('error' in room) {
     if (room.error === 'ROOM_NOT_FOUND') {
       return sendError(res, 404, room.error);
+    }
+
+    if (room.error === 'INVALID_DISPLAY_NAME') {
+      return sendError(res, 400, room.error, { message: 'Display name must not be empty' });
+    }
+
+    if (room.error === 'DISPLAY_NAME_TOO_LONG') {
+      return sendError(res, 400, room.error, { message: 'Display name max length is 30 chars' });
     }
 
     return sendError(res, 409, room.error, { message: 'Display name already taken in room' });

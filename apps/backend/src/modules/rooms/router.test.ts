@@ -172,3 +172,45 @@ test('POST /rooms returns structured unauthorized envelope', async () => {
     assert.ok(body.traceId.length > 0);
   });
 });
+
+
+test('POST /rooms/:roomId/join validates display name', async () => {
+  await withServer(async (baseUrl) => {
+    const createResponse = await fetch(`${baseUrl}/rooms`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-user-id': 'host-1',
+        'x-user-name': 'Host'
+      },
+      body: JSON.stringify({ title: 'Test Room' })
+    });
+
+    assert.equal(createResponse.status, 201);
+    const createBody = (await createResponse.json()) as { room: { id: string } };
+
+    const emptyNameResponse = await fetch(`${baseUrl}/rooms/${createBody.room.id}/join`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': 'player-empty',
+        'x-user-name': '   '
+      }
+    });
+    assert.equal(emptyNameResponse.status, 400);
+    const emptyPayload = (await emptyNameResponse.json()) as { error: string; traceId: string };
+    assert.equal(emptyPayload.error, 'INVALID_DISPLAY_NAME');
+    assert.equal(typeof emptyPayload.traceId, 'string');
+
+    const longNameResponse = await fetch(`${baseUrl}/rooms/${createBody.room.id}/join`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': 'player-long',
+        'x-user-name': 'A'.repeat(31)
+      }
+    });
+    assert.equal(longNameResponse.status, 400);
+    const longPayload = (await longNameResponse.json()) as { error: string; traceId: string };
+    assert.equal(longPayload.error, 'DISPLAY_NAME_TOO_LONG');
+    assert.equal(typeof longPayload.traceId, 'string');
+  });
+});

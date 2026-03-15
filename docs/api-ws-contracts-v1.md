@@ -20,6 +20,7 @@ Join room by id with idempotency by `x-user-id`.
 Responses:
 - `200` `{ room }`
 - `404` `ROOM_NOT_FOUND`
+- `400` `INVALID_DISPLAY_NAME|DISPLAY_NAME_TOO_LONG`
 - `409` `DISPLAY_NAME_TAKEN`
 
 ### `POST /rooms/join-by-code`
@@ -27,7 +28,7 @@ Join room by invite code.
 
 Responses:
 - `200` `{ room }`
-- `400` `VALIDATION_ERROR`
+- `400` `VALIDATION_ERROR|INVALID_DISPLAY_NAME|DISPLAY_NAME_TOO_LONG`
 - `404` `ROOM_NOT_FOUND`
 - `409` `DISPLAY_NAME_TAKEN`
 
@@ -61,7 +62,7 @@ Responses:
 
 ## Error envelope
 ```json
-{ "error": "ERROR_CODE", "message": "optional human readable message" }
+{ "error": "ERROR_CODE", "message": "optional human readable message", "traceId": "uuid" }
 ```
 
 ## WS contracts (target for next iteration)

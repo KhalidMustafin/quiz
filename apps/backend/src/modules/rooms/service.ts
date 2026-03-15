@@ -29,11 +29,20 @@ export interface Room {
   activeSessionId?: string;
 }
 
-type JoinRoomResult = { room: Room } | { error: 'ROOM_NOT_FOUND' | 'DISPLAY_NAME_TAKEN' };
+type JoinRoomResult =
+  | { room: Room }
+  | { error: 'ROOM_NOT_FOUND' | 'DISPLAY_NAME_TAKEN' | 'INVALID_DISPLAY_NAME' | 'DISPLAY_NAME_TOO_LONG' };
 
 type StartRoomResult =
   | { room: Room; session: GameSession; replayed: boolean }
   | { error: 'ROOM_NOT_FOUND' | 'FORBIDDEN' | 'INVALID_STATE' | 'INSUFFICIENT_PLAYERS' };
+
+
+const MAX_DISPLAY_NAME_LENGTH = 30;
+
+function normalizeDisplayName(displayName: string): string {
+  return displayName.trim().replace(/\s+/g, ' ');
+}
 
 function makeInviteCode(): string {
   return crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -105,8 +114,19 @@ class RoomsService {
       return { room };
     }
 
-    const normalizedDisplayName = input.displayName.trim().toLowerCase();
-    const isNameTaken = room.members.some((member) => member.displayName.trim().toLowerCase() === normalizedDisplayName);
+    const normalizedDisplayName = normalizeDisplayName(input.displayName);
+    if (!normalizedDisplayName) {
+      return { error: 'INVALID_DISPLAY_NAME' };
+    }
+
+    if (normalizedDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      return { error: 'DISPLAY_NAME_TOO_LONG' };
+    }
+
+    const normalizedDisplayNameLower = normalizedDisplayName.toLowerCase();
+    const isNameTaken = room.members.some(
+      (member) => normalizeDisplayName(member.displayName).toLowerCase() === normalizedDisplayNameLower
+    );
 
     if (isNameTaken) {
       return { error: 'DISPLAY_NAME_TAKEN' };
@@ -114,7 +134,7 @@ class RoomsService {
 
     room.members.push({
       userId: input.userId,
-      displayName: input.displayName,
+      displayName: normalizedDisplayName,
       joinedAt: new Date().toISOString(),
       isHost: false
     });

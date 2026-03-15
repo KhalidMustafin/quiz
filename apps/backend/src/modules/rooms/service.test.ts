@@ -59,6 +59,33 @@ test('joinRoom rejects duplicated display name for another user', () => {
   assert.deepEqual(duplicatedName, { error: 'DISPLAY_NAME_TAKEN' });
 });
 
+
+
+test('joinRoom rejects empty and too long display names', () => {
+  roomsService.reset();
+
+  const room = roomsService.createRoom({
+    title: 'Room',
+    hostId: 'host-1',
+    hostName: 'Host'
+  });
+
+  const emptyDisplayName = roomsService.joinRoom({
+    roomId: room.id,
+    userId: 'player-empty',
+    displayName: '   '
+  });
+  assert.deepEqual(emptyDisplayName, { error: 'INVALID_DISPLAY_NAME' });
+
+  const tooLongDisplayName = roomsService.joinRoom({
+    roomId: room.id,
+    userId: 'player-long',
+    displayName: 'A'.repeat(31)
+  });
+  assert.deepEqual(tooLongDisplayName, { error: 'DISPLAY_NAME_TOO_LONG' });
+});
+
+
 test('only host can start room and at least two players are required', () => {
   roomsService.reset();
 
