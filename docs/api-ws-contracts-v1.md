@@ -45,6 +45,20 @@ Responses:
 - `404` `ROOM_NOT_FOUND`
 - `409` `INSUFFICIENT_PLAYERS|INVALID_STATE`
 
+
+### `GET /sessions`
+List currently known game sessions.
+
+Responses:
+- `200` `{ items: GameSession[] }`
+
+### `GET /sessions/:sessionId`
+Get session details by id.
+
+Responses:
+- `200` `{ session }`
+- `404` `SESSION_NOT_FOUND`
+
 ## Error envelope
 ```json
 { "error": "ERROR_CODE", "message": "optional human readable message" }

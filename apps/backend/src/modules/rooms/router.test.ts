@@ -146,7 +146,29 @@ test('POST /rooms/:roomId/join returns 409 when display name already taken', asy
     });
     assert.equal(joinSecondResponse.status, 409);
 
-    const body = (await joinSecondResponse.json()) as { error: string };
+    const body = (await joinSecondResponse.json()) as { error: string; traceId: string };
     assert.equal(body.error, 'DISPLAY_NAME_TAKEN');
+    assert.equal(typeof body.traceId, 'string');
+    assert.ok(body.traceId.length > 0);
+  });
+});
+
+
+test('POST /rooms returns structured unauthorized envelope', async () => {
+  await withServer(async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/rooms`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({ title: 'No User' })
+    });
+
+    assert.equal(response.status, 401);
+    const body = (await response.json()) as { error: string; message?: string; traceId: string };
+    assert.equal(body.error, 'UNAUTHORIZED');
+    assert.equal(typeof body.message, 'string');
+    assert.equal(typeof body.traceId, 'string');
+    assert.ok(body.traceId.length > 0);
   });
 });
