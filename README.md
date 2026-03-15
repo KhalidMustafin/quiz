@@ -10,6 +10,8 @@
 ## Product planning
 
 - Детальный план запуска MVP: `docs/mvp-delivery-plan.md`.
+- Машиночитаемый workflow исполнения (стадии, зависимости, KPI): `docs/mvp-execution-workflow.yaml`.
+- Практический план исполнения “что дальше”: `docs/mvp-next-steps.md`.
 
 ## Требования
 
