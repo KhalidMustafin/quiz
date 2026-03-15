@@ -18,6 +18,15 @@ roomsRouter.get('/', (_req, res) => {
   res.json({ items: roomsService.listRooms() });
 });
 
+roomsRouter.get('/by-code/:code', (req, res) => {
+  const room = roomsService.getRoomByCode(req.params.code);
+  if (!room) {
+    return res.status(404).json({ error: 'ROOM_NOT_FOUND' });
+  }
+
+  return res.json({ room });
+});
+
 roomsRouter.post('/', (req, res) => {
   const { userId, userName } = getUserContext(req);
   if (!userId) {
@@ -49,6 +58,26 @@ roomsRouter.post('/:roomId/join', (req, res) => {
   }
 
   const room = roomsService.joinRoom({ roomId: req.params.roomId, userId, displayName: userName });
+
+  if (!room) {
+    return res.status(404).json({ error: 'ROOM_NOT_FOUND' });
+  }
+
+  return res.json({ room });
+});
+
+roomsRouter.post('/join-by-code', (req, res) => {
+  const { userId, userName } = getUserContext(req);
+  if (!userId) {
+    return res.status(401).json({ error: 'UNAUTHORIZED', message: 'x-user-id header is required' });
+  }
+
+  const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+  if (!code) {
+    return res.status(400).json({ error: 'VALIDATION_ERROR', message: 'code is required' });
+  }
+
+  const room = roomsService.joinRoomByCode({ code, userId, displayName: userName });
 
   if (!room) {
     return res.status(404).json({ error: 'ROOM_NOT_FOUND' });

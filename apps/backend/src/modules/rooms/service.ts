@@ -53,6 +53,17 @@ class RoomsService {
     return this.rooms.get(roomId) ?? null;
   }
 
+  getRoomByCode(code: string): Room | null {
+    const normalizedCode = code.trim().toUpperCase();
+    for (const room of this.rooms.values()) {
+      if (room.code === normalizedCode) {
+        return room;
+      }
+    }
+
+    return null;
+  }
+
   createRoom(input: { title: string; hostId: string; hostName: string }): Room {
     const now = new Date().toISOString();
     const room: Room = {
@@ -97,6 +108,21 @@ class RoomsService {
     room.updatedAt = new Date().toISOString();
 
     return room;
+  }
+
+
+  joinRoomByCode(input: { code: string; userId: string; displayName: string }): Room | null {
+    const room = this.getRoomByCode(input.code);
+    if (!room) {
+      return null;
+    }
+
+    return this.joinRoom({ roomId: room.id, userId: input.userId, displayName: input.displayName });
+  }
+
+  reset(): void {
+    this.rooms.clear();
+    this.sessions.clear();
   }
 
   startRoom(input: { roomId: string; requesterId: string }):
