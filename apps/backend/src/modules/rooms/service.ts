@@ -29,6 +29,21 @@ export interface Room {
   activeSessionId?: string;
 }
 
+type JoinRoomResult =
+  | { room: Room }
+  | { error: 'ROOM_NOT_FOUND' | 'DISPLAY_NAME_TAKEN' | 'INVALID_DISPLAY_NAME' | 'DISPLAY_NAME_TOO_LONG' };
+
+type StartRoomResult =
+  | { room: Room; session: GameSession; replayed: boolean }
+  | { error: 'ROOM_NOT_FOUND' | 'FORBIDDEN' | 'INVALID_STATE' | 'INSUFFICIENT_PLAYERS' };
+
+
+const MAX_DISPLAY_NAME_LENGTH = 30;
+
+function normalizeDisplayName(displayName: string): string {
+  return displayName.trim().replace(/\s+/g, ' ');
+}
+
 function makeInviteCode(): string {
   return crypto.randomBytes(3).toString('hex').toUpperCase();
 }
@@ -88,33 +103,51 @@ class RoomsService {
     return room;
   }
 
-  joinRoom(input: { roomId: string; userId: string; displayName: string }): Room | null {
+  joinRoom(input: { roomId: string; userId: string; displayName: string }): JoinRoomResult {
     const room = this.rooms.get(input.roomId);
     if (!room) {
-      return null;
+      return { error: 'ROOM_NOT_FOUND' };
     }
 
     const existingMember = room.members.find((member) => member.userId === input.userId);
     if (existingMember) {
-      return room;
+      return { room };
+    }
+
+    const normalizedDisplayName = normalizeDisplayName(input.displayName);
+    if (!normalizedDisplayName) {
+      return { error: 'INVALID_DISPLAY_NAME' };
+    }
+
+    if (normalizedDisplayName.length > MAX_DISPLAY_NAME_LENGTH) {
+      return { error: 'DISPLAY_NAME_TOO_LONG' };
+    }
+
+    const normalizedDisplayNameLower = normalizedDisplayName.toLowerCase();
+    const isNameTaken = room.members.some(
+      (member) => normalizeDisplayName(member.displayName).toLowerCase() === normalizedDisplayNameLower
+    );
+
+    if (isNameTaken) {
+      return { error: 'DISPLAY_NAME_TAKEN' };
     }
 
     room.members.push({
       userId: input.userId,
-      displayName: input.displayName,
+      displayName: normalizedDisplayName,
       joinedAt: new Date().toISOString(),
       isHost: false
     });
     room.updatedAt = new Date().toISOString();
 
-    return room;
+    return { room };
   }
 
 
-  joinRoomByCode(input: { code: string; userId: string; displayName: string }): Room | null {
+  joinRoomByCode(input: { code: string; userId: string; displayName: string }): JoinRoomResult {
     const room = this.getRoomByCode(input.code);
     if (!room) {
-      return null;
+      return { error: 'ROOM_NOT_FOUND' };
     }
 
     return this.joinRoom({ roomId: room.id, userId: input.userId, displayName: input.displayName });
@@ -125,9 +158,7 @@ class RoomsService {
     this.sessions.clear();
   }
 
-  startRoom(input: { roomId: string; requesterId: string }):
-    | { room: Room; session: GameSession }
-    | { error: 'ROOM_NOT_FOUND' | 'FORBIDDEN' | 'INVALID_STATE' | 'INSUFFICIENT_PLAYERS' } {
+  startRoom(input: { roomId: string; requesterId: string }): StartRoomResult {
     const room = this.rooms.get(input.roomId);
     if (!room) {
       return { error: 'ROOM_NOT_FOUND' };
@@ -135,6 +166,13 @@ class RoomsService {
 
     if (room.hostId !== input.requesterId) {
       return { error: 'FORBIDDEN' };
+    }
+
+    if (room.status === 'in_game' && room.activeSessionId) {
+      const currentSession = this.sessions.get(room.activeSessionId);
+      if (currentSession) {
+        return { room, session: currentSession, replayed: true };
+      }
     }
 
     if (room.status !== 'lobby') {
@@ -158,7 +196,7 @@ class RoomsService {
     room.activeSessionId = session.id;
     this.sessions.set(session.id, session);
 
-    return { room, session };
+    return { room, session, replayed: false };
   }
 }
 
