@@ -1,0 +1,337 @@
+workflow:
+  id: telegram-quiz-mvp-execution
+  version: 1
+  source_doc: docs/mvp-delivery-plan.md
+  mode: sequential_with_dependencies
+
+  globals:
+    project: telegram-quiz-mvp
+    duration_weeks: 6
+    priorities:
+      - P0
+      - P1
+      - P2
+    roles:
+      - PM
+      - DevA
+      - DevB
+      - QA
+      - Content
+      - Design
+
+  stages:
+    - id: S0
+      name: Scope Freeze
+      sprint: "Day 1-2"
+      goal: "Зафиксировать неизменяемый P0 контракт"
+      tasks:
+        - id: MVP-001
+          title: "P0 scope one-pager"
+          owner: PM
+          estimate: "0.5d"
+          priority: P0
+          input:
+            - docs/mvp-delivery-plan.md
+          output:
+            - docs/p0-scope-onepager.md
+          acceptance_criteria:
+            - "Все P0 фичи перечислены явно"
+            - "P1/P2 отмечены как out-of-scope"
+            - "Есть DoD на каждую P0 фичу"
+          dependencies: []
+
+        - id: MVP-002
+          title: "DoR/DoD и формат трекинга"
+          owner: PM
+          estimate: "0.5d"
+          priority: P0
+          output:
+            - docs/process-definition.md
+          acceptance_criteria:
+            - "Определены DoR/DoD"
+            - "Определен ритм статусов и демо"
+          dependencies: [MVP-001]
+
+    - id: S1
+      name: Solution Design v1
+      sprint: "Day 2-4"
+      goal: "Закрыть архитектурные риски до активной разработки"
+      tasks:
+        - id: MVP-003
+          title: "Architecture diagram"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          output:
+            - docs/architecture-v1.md
+          acceptance_criteria:
+            - "Покрыты WebApp/API/Postgres/Redis/WS/Bot"
+            - "Отмечены точки отказа и boundaries"
+          dependencies: [MVP-001]
+
+        - id: MVP-004
+          title: "Game state machine"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          output:
+            - docs/game-state-machine.md
+          acceptance_criteria:
+            - "Есть переходы lobby→game→results→rematch"
+            - "Есть таймеры и terminal states"
+          dependencies: [MVP-001]
+
+        - id: MVP-005
+          title: "ERD + migration gaps review"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          output:
+            - docs/erd-v1.md
+            - docs/migration-gaps.md
+          acceptance_criteria:
+            - "Покрыты users/rooms/sessions/questions/answers/reports/events"
+            - "Определены индексы и FK"
+          dependencies: [MVP-001]
+
+        - id: MVP-006
+          title: "API/WS contracts draft"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          output:
+            - docs/contracts-api-ws-v1.md
+          acceptance_criteria:
+            - "Описаны auth/room/session/result/report endpoints"
+            - "Описаны WS события lobby/game"
+            - "Определены idempotency rules"
+          dependencies: [MVP-004, MVP-005]
+
+        - id: MVP-007
+          title: "Wireflow + UI states"
+          owner: DevB
+          estimate: "1d"
+          priority: P0
+          output:
+            - docs/wireflow-v1.md
+          acceptance_criteria:
+            - "Есть loading/empty/error/disconnected/expired состояния"
+            - "Покрыто 10-11 экранов"
+          dependencies: [MVP-001]
+
+    - id: S2
+      name: Foundation + Auth + App Shell
+      sprint: "Sprint 1"
+      goal: "Поднять технический фундамент и вход пользователя"
+      tasks:
+        - id: MVP-008
+          title: "Monorepo + TS strict + lint/format"
+          owner: DevA
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-003]
+
+        - id: MVP-009
+          title: "Docker Compose + env policy"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          dependencies: [MVP-008]
+
+        - id: MVP-010
+          title: "CI pipeline (lint/typecheck/build)"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          dependencies: [MVP-008]
+
+        - id: MVP-011
+          title: "Telegram initData verification + upsert user + token"
+          owner: DevA
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-006, MVP-009]
+
+        - id: MVP-012
+          title: "WebApp shell + welcome flow"
+          owner: DevB
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-007, MVP-011]
+
+    - id: S3
+      name: Rooms + Lobby + Invite
+      sprint: "Sprint 2"
+      goal: "Стабильный create/join/start цикл"
+      tasks:
+        - id: MVP-013
+          title: "Rooms CRUD + idempotent join + host-only start"
+          owner: DevA
+          estimate: "2d"
+          priority: P0
+          dependencies: [MVP-006, MVP-011]
+
+        - id: MVP-014
+          title: "Lobby WS events"
+          owner: DevA
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-013]
+
+        - id: MVP-015
+          title: "Lobby UI + invite link/deeplink"
+          owner: DevB
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-012, MVP-014]
+
+    - id: S4
+      name: Content Pipeline + Game Engine
+      sprint: "Sprint 3"
+      goal: "Игровая сессия 10 вопросов end-to-end"
+      tasks:
+        - id: MVP-016
+          title: "CSV/JSON import + validation + dedupe"
+          owner: DevA
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-005]
+
+        - id: MVP-017
+          title: "Seed 300-500 questions"
+          owner: Content
+          estimate: "2-3d (part-time)"
+          priority: P0
+          dependencies: [MVP-016]
+
+        - id: MVP-018
+          title: "Session runtime: start, 10Q, timers, scoring, answer idempotency"
+          owner: DevA
+          estimate: "2.5d"
+          priority: P0
+          dependencies: [MVP-013, MVP-017]
+
+        - id: MVP-019
+          title: "Game client realtime flow"
+          owner: DevB
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-018]
+
+    - id: S5
+      name: Results + Rematch + Share
+      sprint: "Sprint 4"
+      goal: "Закрыть вирусный loop после завершения игры"
+      tasks:
+        - id: MVP-020
+          title: "Final results payload + leaderboard API"
+          owner: DevA
+          estimate: "0.5d"
+          priority: P0
+          dependencies: [MVP-018]
+
+        - id: MVP-021
+          title: "Results UI + rematch flow"
+          owner: DevB
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-019, MVP-020]
+
+        - id: MVP-022
+          title: "Result card PNG + asset endpoint + caching"
+          owner: DevA
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-020]
+
+        - id: MVP-023
+          title: "Share CTA + UTM attribution"
+          owner: DevB
+          estimate: "0.5d"
+          priority: P0
+          dependencies: [MVP-022, MVP-021]
+
+    - id: S6
+      name: Admin + Analytics + Moderation
+      sprint: "Sprint 5"
+      goal: "Операционное управление и метрики MVP"
+      tasks:
+        - id: MVP-024
+          title: "Admin panel MVP (packs/questions CRUD, reports queue, user block)"
+          owner: DevB
+          estimate: "2d"
+          priority: P0
+          dependencies: [MVP-016, MVP-012]
+
+        - id: MVP-025
+          title: "Event schema + ingestion pipeline"
+          owner: DevA
+          estimate: "1.5d"
+          priority: P0
+          dependencies: [MVP-006]
+
+        - id: MVP-026
+          title: "Funnel/cohort SQL dashboards"
+          owner: DevA
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-025]
+
+        - id: MVP-027
+          title: "Anti-abuse baseline (rate limits, reports E2E, stop-words, suspicious logs)"
+          owner: DevA
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-024, MVP-025]
+
+    - id: S7
+      name: QA Hardening + Beta Readiness
+      sprint: "Sprint 6"
+      goal: "Подготовка к закрытому бета-запуску"
+      tasks:
+        - id: MVP-028
+          title: "Unit/integration/E2E smoke on critical path"
+          owner: QA
+          estimate: "2d"
+          priority: P0
+          dependencies: [MVP-023, MVP-027]
+
+        - id: MVP-029
+          title: "Sentry + alerts + rollback plan"
+          owner: DevA
+          estimate: "1d"
+          priority: P0
+          dependencies: [MVP-010, MVP-028]
+
+        - id: MVP-030
+          title: "Go/No-Go review + beta launch checklist"
+          owner: PM
+          estimate: "0.5d"
+          priority: P0
+          dependencies: [MVP-029]
+
+  checkpoints:
+    - name: "End Sprint 2"
+      criteria:
+        - "create/join/lobby стабильно работает"
+    - name: "End Sprint 3"
+      criteria:
+        - "10 вопросов консистентно для 3+ игроков"
+    - name: "End Sprint 4"
+      criteria:
+        - "rematch и share result card готовы"
+    - name: "End Sprint 5"
+      criteria:
+        - "funnel-метрики + админка + reports готовы"
+    - name: "End Sprint 6"
+      criteria:
+        - "техническая и операционная готовность закрытой беты"
+
+  kpi_tracking_tasks:
+    - "app_opened -> room_created conversion"
+    - "invite_link_generated -> player_joined_room conversion"
+    - "room_created -> game_started rate"
+    - "game_started -> game_finished rate"
+    - "game_finished -> rematch_clicked rate"
+    - "game_finished -> share_result_clicked rate"
+    - "D1/D7 retention by role (host/player)"
