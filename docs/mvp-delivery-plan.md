@@ -240,6 +240,17 @@
 - `[Dev B]` Wireflow + UI states (loading/empty/error/disconnected/expired) — **до конца Дня 2**.
 - `[PM + Team]` Sprint 1 commitment (DoR/DoD и оценка) — **до конца Дня 2**.
 
+
+### 8.3 Story 1.2 — Solution Design v1 (owner/estimate/dependencies)
+
+- `[Dev A]` Architecture diagram (WebApp/API/DB/Redis/WS/Bot) — **0.5d**, dependency: **1.1.1**.
+- `[Dev A]` Game state machine (lobby -> question -> result -> rematch) — **0.5d**, dependency: **1.1.1**.
+- `[Dev A]` ERD + migration gaps review — **0.5d**, dependency: **1.1.1**.
+- `[Dev A]` API/WS contracts draft (Swagger/Markdown) — **0.5d**, dependencies: **1.2.2, 1.2.3**.
+- `[Dev B]` Wireflow + UI states (loading/empty/error/disconnected/expired) — **1d**, dependency: **1.1.1**.
+
+Артефакт: `docs/solution-design-v1.md`.
+
 ## 9) KPI для первых 30 дней после запуска
 
 - Room creation conversion (app_opened -> room_created).
