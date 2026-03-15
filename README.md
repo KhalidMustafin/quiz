@@ -7,6 +7,10 @@
 - `apps/admin` — админ-панель React.
 - `packages/shared` — общие типы и утилиты.
 
+## Product planning
+
+- Детальный план запуска MVP: `docs/mvp-delivery-plan.md`.
+
 ## Требования
 
 - Node.js 20+
