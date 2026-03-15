@@ -59,11 +59,15 @@ roomsRouter.post('/:roomId/join', (req, res) => {
 
   const room = roomsService.joinRoom({ roomId: req.params.roomId, userId, displayName: userName });
 
-  if (!room) {
-    return res.status(404).json({ error: 'ROOM_NOT_FOUND' });
+  if ('error' in room) {
+    if (room.error === 'ROOM_NOT_FOUND') {
+      return res.status(404).json({ error: room.error });
+    }
+
+    return res.status(409).json({ error: room.error, message: 'Display name already taken in room' });
   }
 
-  return res.json({ room });
+  return res.json({ room: room.room });
 });
 
 roomsRouter.post('/join-by-code', (req, res) => {
@@ -79,11 +83,15 @@ roomsRouter.post('/join-by-code', (req, res) => {
 
   const room = roomsService.joinRoomByCode({ code, userId, displayName: userName });
 
-  if (!room) {
-    return res.status(404).json({ error: 'ROOM_NOT_FOUND' });
+  if ('error' in room) {
+    if (room.error === 'ROOM_NOT_FOUND') {
+      return res.status(404).json({ error: room.error });
+    }
+
+    return res.status(409).json({ error: room.error, message: 'Display name already taken in room' });
   }
 
-  return res.json({ room });
+  return res.json({ room: room.room });
 });
 
 roomsRouter.post('/:roomId/start', (req, res) => {
@@ -110,5 +118,9 @@ roomsRouter.post('/:roomId/start', (req, res) => {
     return res.status(409).json({ error: result.error, message: 'Room is not in lobby state' });
   }
 
-  return res.status(201).json({ room: result.room, session: result.session });
+  if (result.replayed) {
+    return res.status(200).json({ room: result.room, session: result.session, replayed: true });
+  }
+
+  return res.status(201).json({ room: result.room, session: result.session, replayed: false });
 });

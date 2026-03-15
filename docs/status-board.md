@@ -9,7 +9,7 @@
 | MVP-003 | Architecture v1                               | S1    | MVP-001            | TBD   | Done        | draft |
 | MVP-004 | Game state machine                            | S1    | MVP-001            | TBD   | Done        | draft |
 | MVP-005 | ERD v1 + migration gaps                       | S1    | MVP-001            | TBD   | Done        | drafts |
-| MVP-006 | API/WS contracts                              | S1    | MVP-004, MVP-005   | TBD   | Not Started | next |
+| MVP-006 | API/WS contracts                              | S1    | MVP-004, MVP-005   | TBD   | In Progress | `docs/api-ws-contracts-v1.md` |
 | MVP-007 | Foundation/Auth/App shell                     | S2    | MVP-001            | TBD   | Not Started | |
 | MVP-008 | Core backend scaffolding                      | S2    | MVP-003            | TBD   | Not Started | |
 | MVP-009 | Frontend game flow base                       | S2    | MVP-003            | TBD   | Not Started | |

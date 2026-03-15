@@ -96,5 +96,57 @@ test('POST /rooms/join-by-code joins room and remains idempotent', async () => {
       }
     });
     assert.equal(startHost.status, 201);
+
+    const startHostReplay = await fetch(`${baseUrl}/rooms/${createBody.room.id}/start`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': 'host-1'
+      }
+    });
+    assert.equal(startHostReplay.status, 200);
+
+    const createdSession = (await startHost.json()) as { session: { id: string }; replayed: boolean };
+    const replayedSession = (await startHostReplay.json()) as { session: { id: string }; replayed: boolean };
+    assert.equal(createdSession.replayed, false);
+    assert.equal(replayedSession.replayed, true);
+    assert.equal(createdSession.session.id, replayedSession.session.id);
+  });
+});
+
+test('POST /rooms/:roomId/join returns 409 when display name already taken', async () => {
+  await withServer(async (baseUrl) => {
+    const createResponse = await fetch(`${baseUrl}/rooms`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-user-id': 'host-1',
+        'x-user-name': 'Host'
+      },
+      body: JSON.stringify({ title: 'Test Room' })
+    });
+
+    assert.equal(createResponse.status, 201);
+    const createBody = (await createResponse.json()) as { room: { id: string } };
+
+    const joinFirstResponse = await fetch(`${baseUrl}/rooms/${createBody.room.id}/join`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': 'player-1',
+        'x-user-name': 'Player'
+      }
+    });
+    assert.equal(joinFirstResponse.status, 200);
+
+    const joinSecondResponse = await fetch(`${baseUrl}/rooms/${createBody.room.id}/join`, {
+      method: 'POST',
+      headers: {
+        'x-user-id': 'player-2',
+        'x-user-name': 'player'
+      }
+    });
+    assert.equal(joinSecondResponse.status, 409);
+
+    const body = (await joinSecondResponse.json()) as { error: string };
+    assert.equal(body.error, 'DISPLAY_NAME_TAKEN');
   });
 });
